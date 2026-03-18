@@ -4467,7 +4467,7 @@ figcaption {
   }
 
   .work-list_image-second {
-    right: -5%;
+    right: 16%;
   }
 
   .services_items {
@@ -4652,19 +4652,9 @@ figcaption {
   place-self: end start;
 }
 
-#w-node-_0632acfa-8aaa-b158-7b6a-58a2921af576-921af54a {
-  place-self: end;
-}
-
 @media screen and (max-width: 991px) {
   #w-node-_484cd889-9c9b-9c07-ce5b-d03b07feac89-5495f3e2 {
     grid-area: span 1 / span 2 / span 1 / span 2;
-  }
-}
-
-@media screen and (max-width: 767px) {
-  #w-node-_0632acfa-8aaa-b158-7b6a-58a2921af576-921af54a {
-    justify-self: start;
   }
 }
 
