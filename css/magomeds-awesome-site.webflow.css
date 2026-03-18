@@ -4399,6 +4399,10 @@ figcaption {
     display: none;
   }
 
+  .page-wrapper {
+    overflow: visible;
+  }
+
   .resources_fonts {
     grid-template-columns: 1fr 1fr;
   }
@@ -4640,6 +4644,10 @@ figcaption {
 
   .work-related_img {
     aspect-ratio: 3 / 2;
+  }
+
+  .body {
+    overflow: visible;
   }
 }
 
