@@ -908,6 +908,7 @@ figcaption {
 .page-wrapper {
   z-index: 1;
   position: relative;
+  overflow: hidden;
 }
 
 .page-wrapper.full-height {
