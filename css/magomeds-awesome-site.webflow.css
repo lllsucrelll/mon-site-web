@@ -908,7 +908,7 @@ figcaption {
 .page-wrapper {
   z-index: 1;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .page-wrapper.full-height {
@@ -3178,6 +3178,10 @@ figcaption {
   margin-bottom: 2px;
   font-style: normal;
   display: inline-block;
+}
+
+.body {
+  overflow: visible;
 }
 
 @media screen and (max-width: 991px) {
