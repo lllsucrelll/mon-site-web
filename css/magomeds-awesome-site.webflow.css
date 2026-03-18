@@ -4400,7 +4400,7 @@ figcaption {
   }
 
   .page-wrapper {
-    overflow: visible;
+    overflow: hidden;
   }
 
   .resources_fonts {
