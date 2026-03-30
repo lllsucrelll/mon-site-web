@@ -4876,6 +4876,10 @@ figcaption {
     padding-right: 10px;
     line-height: 1.2;
   }
+
+  .piste {
+    height: 3000px;
+  }
 }
 
 @media screen and (max-width: 479px) {
@@ -5209,7 +5213,9 @@ figcaption {
     height: 20px;
     margin-left: auto;
     margin-right: auto;
-    right: 86%;
+    top: 50vh;
+    left: auto;
+    right: auto;
   }
 
   .text-block-2 {
@@ -5222,8 +5228,12 @@ figcaption {
   }
 
   .piste {
+    width: 40px;
     height: 2245px;
     padding-top: 176px;
+    padding-left: 0;
+    position: absolute;
+    inset: auto;
   }
 
   .div-block-3 {
