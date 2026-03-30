@@ -3408,9 +3408,17 @@ figcaption {
   text-align: left;
   background-color: gray;
   width: 15px;
-  height: 860px;
+  height: 880px;
   margin-left: auto;
   margin-right: auto;
+}
+
+.ligne-bleue.end {
+  background-image: linear-gradient(gray 70%, #f8f7f3);
+}
+
+.ligne-bleue.top {
+  background-image: linear-gradient(#f8f7f3, gray 16%);
 }
 
 .section-3, .section-4 {
@@ -3498,7 +3506,7 @@ figcaption {
 }
 
 .piste {
-  height: 2390px;
+  height: 2520px;
   padding-top: 60px;
   position: absolute;
   inset: 0% 0% auto;
@@ -5125,14 +5133,60 @@ figcaption {
     flex-direction: column;
   }
 
+  .section, .section-2 {
+    overflow: visible;
+  }
+
+  .heading {
+    padding-bottom: 0;
+  }
+
   .ligne-bleue {
     width: 5px;
+    height: 810px;
     margin-left: auto;
     margin-right: auto;
   }
 
-  .timeline-left, .timeline-right {
-    width: 140px;
+  .ligne-bleue.end {
+    background-image: linear-gradient(180deg, grey 77%, var(--_colors---primary--beige));
+    height: 740px;
+  }
+
+  .ligne-bleue.top {
+    background-image: linear-gradient(#f8f7f3, gray 11%);
+    margin-top: 122px;
+  }
+
+  .section-3 {
+    overflow: visible;
+  }
+
+  .timeline-item {
+    flex-flow: row;
+    height: 800px;
+    overflow: visible;
+  }
+
+  .timeline-left {
+    order: 0;
+    width: auto;
+    height: auto;
+    display: none;
+  }
+
+  .timeline-center {
+    order: -9999;
+  }
+
+  .timeline-center.end {
+    height: 740px;
+  }
+
+  .timeline-right {
+    grid-column-gap: 15px;
+    grid-row-gap: 15px;
+    width: 250px;
   }
 
   .timeline-dot {
@@ -5140,11 +5194,33 @@ figcaption {
     border-radius: 20px;
     width: 20px;
     height: 20px;
+    margin-left: auto;
+    margin-right: auto;
+    right: 86%;
   }
 
   .text-block-2 {
     margin-left: auto;
     margin-right: auto;
+  }
+
+  .section-6 {
+    overflow: visible;
+  }
+
+  .piste {
+    height: 2245px;
+    padding-top: 176px;
+  }
+
+  .div-block-3 {
+    overflow: visible;
+  }
+
+  .text-block-4 {
+    font-size: var(--fixed--2rem);
+    text-align: left;
+    line-height: 1;
   }
 }
 
