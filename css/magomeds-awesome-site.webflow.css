@@ -3516,6 +3516,19 @@ figcaption {
   position: relative;
 }
 
+.text-block-4 {
+  display: none;
+}
+
+.bold-text {
+  display: none;
+  overflow: visible;
+}
+
+.paragraph {
+  text-align: center;
+}
+
 @media screen and (max-width: 991px) {
   body {
     --fixed--1rem: 1.6rem;
@@ -5221,6 +5234,11 @@ figcaption {
     font-size: var(--fixed--2rem);
     text-align: left;
     line-height: 1;
+    display: block;
+  }
+
+  .bold-text {
+    display: block;
   }
 }
 
