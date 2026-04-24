@@ -1,4 +1,4 @@
-<!DOCTYPE html><!--  This site was created in Webflow. https://webflow.com  --><!--  Last Published: Fri Apr 24 2026 07:54:39 GMT+0000 (Coordinated Universal Time)  -->
+<!DOCTYPE html><!--  This site was created in Webflow. https://webflow.com  --><!--  Last Published: Fri Apr 24 2026 08:04:56 GMT+0000 (Coordinated Universal Time)  -->
 <html data-wf-page="69b52f6ae346f9285495f4da" data-wf-site="69b52f69e346f9285495f39a" lang="en">
 <head>
   <meta charset="utf-8">
@@ -174,17 +174,24 @@
   return rect.left + rect.width / 2;
 }
   function update() {
-    var sRect = section.getBoundingClientRect();
-    var viewportMid = window.innerHeight * 0.45;
-    // La bulle apparaît seulement quand on est dans la section
-    if (sRect.top < viewportMid && sRect.bottom > viewportMid) {
-      dot.style.display = 'block';
-      dot.style.top = viewportMid + 'px';
-      dot.style.left = getLineX() + 'px';
-    } else {
-      dot.style.display = 'none';
-    }
+  var sRect = section.getBoundingClientRect();
+  var lineRect = document.querySelector('.timeline-center').getBoundingClientRect();
+  var viewportMid = window.innerHeight * 0.45;
+  var lineX = lineRect.left + lineRect.width / 2;
+  // Calcul de la position verticale clampée entre début et fin de section
+  var dotY = viewportMid;
+  // Si on est au-dessus de la section → bulle bloquée en haut
+  if (sRect.top > viewportMid) {
+    dotY = sRect.top;
   }
+  // Si on est en-dessous de la section → bulle bloquée en bas
+  else if (sRect.bottom < viewportMid) {
+    dotY = sRect.bottom;
+  }
+  dot.style.display = 'block';
+  dot.style.top = dotY + 'px';
+  dot.style.left = lineX + 'px';
+}
   window.addEventListener('scroll', update);
   window.addEventListener('resize', update);
   update();
