@@ -5207,8 +5207,11 @@ figcaption {
   }
 
   .timeline-center.top {
+    justify-content: center;
+    align-items: stretch;
     width: 50px;
     margin-top: 157px;
+    display: flex;
   }
 
   .timeline-right {
@@ -5220,12 +5223,14 @@ figcaption {
   }
 
   .timeline-dot {
+    z-index: 10;
     border-width: 4px;
     border-radius: 20px;
     width: 20px;
     height: 20px;
     margin-left: auto;
     margin-right: auto;
+    padding-left: 0;
     top: 50vh;
     left: auto;
     right: auto;
@@ -5244,6 +5249,8 @@ figcaption {
     width: 40px;
     height: 2245px;
     margin-top: 22px;
+    margin-left: auto;
+    margin-right: auto;
     padding-top: 0;
     padding-left: 0;
     position: absolute;
