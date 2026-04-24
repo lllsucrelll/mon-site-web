@@ -1631,7 +1631,7 @@ figcaption {
 
 .home-about_img-text {
   font-family: var(--_typography---h3--font-family);
-  color: var(--_colors---primary--white);
+  color: var(--_colors---primary--black);
   font-size: var(--_typography---h3--font-size);
   line-height: var(--_typography---h3--line-height);
   font-weight: var(--_typography---h3--font-weight);
