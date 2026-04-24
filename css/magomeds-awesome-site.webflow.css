@@ -5234,11 +5234,13 @@ figcaption {
     z-index: 10;
     border-width: 4px;
     border-radius: 20px;
+    justify-content: center;
     width: 20px;
     height: 20px;
     margin-left: auto;
     margin-right: auto;
     padding-left: 0;
+    display: flex;
     top: 50vh;
     left: auto;
     right: auto;
