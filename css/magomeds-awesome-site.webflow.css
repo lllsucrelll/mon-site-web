@@ -5185,6 +5185,8 @@ figcaption {
     justify-content: center;
     margin-top: -10px;
     display: flex;
+    position: absolute;
+    right: 8px;
   }
 
   .section-3 {
