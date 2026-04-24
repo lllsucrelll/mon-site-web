@@ -5235,7 +5235,7 @@ figcaption {
   .piste {
     width: 40px;
     height: 2245px;
-    margin-top: 176px;
+    margin-top: 0;
     padding-top: 0;
     padding-left: 0;
     position: absolute;
