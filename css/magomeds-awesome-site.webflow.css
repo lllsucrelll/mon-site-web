@@ -5200,6 +5200,8 @@ figcaption {
 
   .timeline-center {
     order: -9999;
+    justify-content: center;
+    display: flex;
   }
 
   .timeline-center.end {
@@ -5209,7 +5211,7 @@ figcaption {
   .timeline-center.top {
     justify-content: center;
     align-items: stretch;
-    width: 50px;
+    width: 25px;
     margin-top: 157px;
     display: flex;
   }
@@ -5246,7 +5248,7 @@ figcaption {
   }
 
   .piste {
-    width: 40px;
+    width: 25px;
     height: 2245px;
     margin-top: 22px;
     margin-left: auto;
