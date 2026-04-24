@@ -359,8 +359,8 @@ figcaption {
 }
 
 .spacer-xxhuge {
-  padding-top: var(--spacer--xxhuge);
   width: 100%;
+  padding-top: var(--spacer--xxhuge);
 }
 
 .z-index-1 {
@@ -386,8 +386,8 @@ figcaption {
 }
 
 .spacer-custom-1 {
-  padding-top: var(--spacer--custom-1);
   width: 100%;
+  padding-top: var(--spacer--custom-1);
 }
 
 .icon-height-xlarge {
@@ -479,8 +479,8 @@ figcaption {
 }
 
 .spacer-custom-3 {
-  padding-top: var(--spacer--custom-3);
   width: 100%;
+  padding-top: var(--spacer--custom-3);
 }
 
 .padding-section-medium {
@@ -488,8 +488,8 @@ figcaption {
 }
 
 .spacer-tiny {
-  padding-top: var(--spacer--tiny);
   width: 100%;
+  padding-top: var(--spacer--tiny);
 }
 
 .pointer-events-auto {
@@ -505,8 +505,8 @@ figcaption {
 }
 
 .spacer-medium {
-  padding-top: var(--spacer--medium);
   width: 100%;
+  padding-top: var(--spacer--medium);
 }
 
 .resources_section {
@@ -544,8 +544,8 @@ figcaption {
 }
 
 .spacer-custom-2 {
-  padding-top: var(--spacer--custom-2);
   width: 100%;
+  padding-top: var(--spacer--custom-2);
 }
 
 .text-weight-light {
@@ -564,10 +564,10 @@ figcaption {
 }
 
 .resources_item-content {
+  width: 100%;
   padding: var(--fixed--2-25rem) var(--fixed--2-5rem) var(--fixed--4rem);
   flex-direction: column;
   flex: 1;
-  width: 100%;
   display: flex;
 }
 
@@ -578,8 +578,8 @@ figcaption {
 }
 
 .spacer-xhuge {
-  padding-top: var(--spacer--xhuge);
   width: 100%;
+  padding-top: var(--spacer--xhuge);
 }
 
 .padding-global {
@@ -619,8 +619,8 @@ figcaption {
 }
 
 .spacer-small {
-  padding-top: var(--spacer--small);
   width: 100%;
+  padding-top: var(--spacer--small);
 }
 
 .aspect-ratio-square {
@@ -747,8 +747,8 @@ figcaption {
 }
 
 .spacer-xxlarge {
-  padding-top: var(--spacer--xxlarge);
   width: 100%;
+  padding-top: var(--spacer--xxlarge);
 }
 
 .max-width-full {
@@ -808,9 +808,9 @@ figcaption {
 }
 
 .spacer-xlarge {
+  width: 100%;
   padding-top: var(--spacer--xlarge);
   text-align: center;
-  width: 100%;
 }
 
 .text-style-muted {
@@ -855,8 +855,8 @@ figcaption {
 }
 
 .spacer-xsmall {
-  padding-top: var(--spacer--xsmall);
   width: 100%;
+  padding-top: var(--spacer--xsmall);
 }
 
 .spacing-clean {
@@ -944,8 +944,8 @@ figcaption {
 }
 
 .spacer-xxsmall {
-  padding-top: var(--spacer--xxsmall);
   width: 100%;
+  padding-top: var(--spacer--xxsmall);
 }
 
 .pointer-events-none {
@@ -965,8 +965,8 @@ figcaption {
 }
 
 .spacer-huge {
-  padding-top: var(--spacer--huge);
   width: 100%;
+  padding-top: var(--spacer--huge);
 }
 
 .resources_class-wrap {
@@ -1017,8 +1017,8 @@ figcaption {
 }
 
 .spacer-large {
-  padding-top: var(--spacer--large);
   width: 100%;
+  padding-top: var(--spacer--large);
 }
 
 .resources_fonts {
@@ -1354,8 +1354,8 @@ figcaption {
 
 .navbar {
   z-index: 99;
-  padding-top: var(--fixed--1rem);
   width: 100%;
+  padding-top: var(--fixed--1rem);
   position: absolute;
   inset: 0% 0% auto;
 }
@@ -1448,11 +1448,11 @@ figcaption {
 }
 
 .home-header_text {
+  max-width: 25.625rem;
   color: var(--_colors---grey--400);
   font-size: var(--fixed--1-125rem);
   font-weight: var(--_typography---font-weight--medium);
   text-align: center;
-  max-width: 25.625rem;
 }
 
 .navbar_logo-wrap {
@@ -1579,11 +1579,11 @@ figcaption {
 }
 
 .home-about_component {
+  width: 100vw;
+  height: 100vh;
   padding: var(--fixed--1rem);
   justify-content: center;
   align-items: center;
-  width: 100vw;
-  height: 100vh;
   transition: padding .6s;
   display: flex;
   position: relative;
@@ -1726,10 +1726,10 @@ figcaption {
   z-index: 4;
   aspect-ratio: 3 / 2;
   border-radius: var(--fixed--1rem);
+  width: 15%;
   transform-style: preserve-3d;
   justify-content: center;
   align-items: center;
-  width: 15%;
   margin-left: auto;
   margin-right: auto;
   display: flex;
@@ -1868,6 +1868,8 @@ figcaption {
 }
 
 .cta_content {
+  width: 100%;
+  height: 100%;
   padding: var(--fixed--4rem);
   grid-column-gap: var(--fixed--3rem);
   grid-row-gap: var(--fixed--3rem);
@@ -1876,8 +1878,6 @@ figcaption {
   flex-flow: column;
   justify-content: space-between;
   align-items: flex-start;
-  width: 100%;
-  height: 100%;
   display: flex;
 }
 
@@ -1891,10 +1891,10 @@ figcaption {
 }
 
 .cta_text {
+  max-width: 350px;
   color: var(--_colors---grey--300);
   font-size: var(--fixed--0-875rem);
   font-weight: var(--_typography---font-weight--medium);
-  max-width: 350px;
 }
 
 .cta_head {
@@ -2200,10 +2200,10 @@ figcaption {
 
 .about-header_cube {
   aspect-ratio: 1 / 1.85;
+  width: 32vh;
   transform-style: preserve-3d;
   justify-content: center;
   align-items: center;
-  width: 32vh;
   display: flex;
   position: relative;
   transform: rotateX(0)rotateY(1deg)rotateZ(0);
@@ -2310,10 +2310,10 @@ figcaption {
 }
 
 .about-values_imgs-wrapper {
-  padding-top: var(--fixed--3rem);
-  padding-bottom: var(--fixed--3rem);
   width: 50%;
   height: 100vh;
+  padding-top: var(--fixed--3rem);
+  padding-bottom: var(--fixed--3rem);
   display: flex;
   position: sticky;
   top: 0;
@@ -2565,11 +2565,11 @@ figcaption {
 .text-field {
   border-radius: var(--fixed--3-5rem);
   background-color: var(--_colors---primary--white);
+  height: 13rem;
   font-family: var(--_typography---font-family--primary);
   color: #000;
   font-size: var(--fixed--3-5rem);
   border: 1px #000;
-  height: 13rem;
   margin-bottom: 0;
   padding-left: 5rem;
   padding-right: 13rem;
@@ -2580,9 +2580,9 @@ figcaption {
 }
 
 .newsletter_btn-wrapper {
-  padding: var(--fixed--1rem);
   width: 100%;
   height: 100%;
+  padding: var(--fixed--1rem);
   position: absolute;
   inset: 0%;
 }
@@ -3461,12 +3461,12 @@ figcaption {
 
 .timeline-dot {
   z-index: 10;
+  width: 40px;
+  height: 40px;
   color: var(--_colors---primary--black);
   background-color: #000;
   border: 8px solid #f8f7f3;
   border-radius: 20px;
-  width: 40px;
-  height: 40px;
   margin-left: auto;
   margin-right: auto;
   position: sticky;
@@ -4019,8 +4019,8 @@ figcaption {
   }
 
   .text-field {
-    font-size: var(--fixed--2-25rem);
     height: 10rem;
+    font-size: var(--fixed--2-25rem);
     padding-left: 3rem;
     padding-right: 11rem;
   }
@@ -4692,8 +4692,8 @@ figcaption {
 
   .text-field {
     border-radius: var(--fixed--1rem);
-    font-size: var(--fixed--1-75rem);
     height: 6rem;
+    font-size: var(--fixed--1-75rem);
     padding-left: 2rem;
     padding-right: 6rem;
   }
@@ -5085,8 +5085,8 @@ figcaption {
   }
 
   .text-field {
-    font-size: var(--fixed--1-125rem);
     height: 5rem;
+    font-size: var(--fixed--1-125rem);
   }
 
   .newsletter_label-wrap {
@@ -5198,6 +5198,10 @@ figcaption {
 
   .timeline-center.end {
     height: 740px;
+  }
+
+  .timeline-center.top {
+    width: 39px;
   }
 
   .timeline-right {
