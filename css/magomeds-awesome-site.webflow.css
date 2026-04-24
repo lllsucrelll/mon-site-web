@@ -5193,6 +5193,7 @@ figcaption {
 
   .timeline-item {
     flex-flow: row;
+    justify-content: center;
     height: 800px;
     overflow: visible;
   }
