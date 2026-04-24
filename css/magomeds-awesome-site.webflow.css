@@ -5202,6 +5202,7 @@ figcaption {
 
   .timeline-center.top {
     width: 39px;
+    margin-top: 0;
   }
 
   .timeline-right {
@@ -5234,7 +5235,7 @@ figcaption {
   .piste {
     width: 40px;
     height: 2245px;
-    padding-top: 176px;
+    padding-top: 171px;
     padding-left: 0;
     position: absolute;
     inset: auto;
