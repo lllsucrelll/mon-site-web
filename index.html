@@ -1,4 +1,4 @@
-<!DOCTYPE html><!--  This site was created in Webflow. https://webflow.com  --><!--  Last Published: Fri Apr 24 2026 08:33:33 GMT+0000 (Coordinated Universal Time)  -->
+<!DOCTYPE html><!--  This site was created in Webflow. https://webflow.com  --><!--  Last Published: Fri Apr 24 2026 08:41:34 GMT+0000 (Coordinated Universal Time)  -->
 <html data-wf-page="69b52f6ae346f9285495f3e2" data-wf-site="69b52f69e346f9285495f39a" lang="en">
 <head>
   <meta charset="utf-8">
@@ -496,25 +496,35 @@
   var timelineSection = document.querySelector('.piste');
   if (!dot || !timelineSection) return;
   function update() {
-  var sRect = timelineSection.getBoundingClientRect();
-  var line = document.querySelector('.ligne-bleue');
-  if (!line) return;
-  var lineRect = line.getBoundingClientRect();
-  var lineX = lineRect.left + lineRect.width / 2;
-  var viewportMid = window.innerHeight * 0.45;
-  var dotY;
-  if (sRect.top > viewportMid) {
-    dotY = sRect.top;
-  } else if (sRect.bottom < viewportMid) {
-    dotY = sRect.bottom;
-  } else {
-    dotY = viewportMid;
+    var sRect = timelineSection.getBoundingClientRect();
+    var line = document.querySelector('.ligne-bleue');
+    if (!line) return;
+    var lineRect = line.getBoundingClientRect();
+    var lineX = lineRect.left + lineRect.width / 2;
+    var viewportHeight = window.visualViewport
+      ? window.visualViewport.height
+      : window.innerHeight;
+    var viewportMid = viewportHeight * 0.5;
+    var scrollOffsetX = window.visualViewport
+      ? window.visualViewport.offsetLeft
+      : 0;
+    var dotY;
+    if (sRect.top > viewportMid) {
+      dotY = sRect.top;
+    } else if (sRect.bottom < viewportMid) {
+      dotY = sRect.bottom;
+    } else {
+      dotY = viewportMid;
+    }
+    dot.style.top = dotY + 'px';
+    dot.style.left = (lineX + scrollOffsetX) + 'px';
   }
-  dot.style.top = dotY + 'px';
-  dot.style.left = lineX + 'px';
- }
   window.addEventListener('scroll', update, { passive: true });
   window.addEventListener('resize', update);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', update);
+    window.visualViewport.addEventListener('scroll', update);
+  }
   update();
 })();
 </script>
