@@ -4219,7 +4219,7 @@ figcaption {
 
 @media screen and (max-width: 767px) {
   body {
-    --fixed--1rem: 1.4rem;
+    --fixed--1rem: 1rem;
     --fixed--0rem: 0rem;
     --fixed--2-5rem: 2.5rem;
     --fixed--1-5rem: 1.5rem;
@@ -4228,7 +4228,7 @@ figcaption {
     --fixed--1-25rem: 1.25rem;
     --fixed--0-875rem: .875rem;
     --spacer--xxhuge: var(--fixed--6rem);
-    --fixed--2rem: 2rem;
+    --fixed--2rem: 2.5rem;
     --spacer--custom-1: var(--fixed--1-125rem);
     --fixed--0-75rem: .75rem;
     --fixed--4rem: 2.5rem;
@@ -4897,6 +4897,10 @@ figcaption {
     display: none;
   }
 
+  .heading-style-h6 {
+    text-align: center;
+  }
+
   .page-wrapper {
     overflow: visible;
   }
@@ -4958,6 +4962,11 @@ figcaption {
     bottom: 1.25rem;
   }
 
+  .home-header_text {
+    line-height: 1;
+    display: block;
+  }
+
   .home-about_img-text {
     white-space: normal;
     width: 80vw;
@@ -4966,6 +4975,11 @@ figcaption {
 
   .work-list_wrapper {
     width: 100%;
+  }
+
+  .work-list_images-wrap {
+    box-sizing: content-box;
+    width: 345px;
   }
 
   .work-list_image-second {
@@ -5171,6 +5185,8 @@ figcaption {
     margin-left: auto;
     margin-right: auto;
     display: flex;
+    position: absolute;
+    right: 8px;
   }
 
   .ligne-bleue.end {
@@ -5210,6 +5226,7 @@ figcaption {
   .timeline-center {
     order: -9999;
     justify-content: center;
+    width: 25px;
     display: flex;
   }
 
@@ -5223,6 +5240,7 @@ figcaption {
     width: 25px;
     margin-top: 157px;
     display: flex;
+    position: relative;
   }
 
   .timeline-right {
