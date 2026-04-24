@@ -3419,6 +3419,8 @@ figcaption {
 
 .ligne-bleue.top {
   background-image: linear-gradient(#f8f7f3, gray 16%);
+  margin-top: -39px;
+  padding-top: 0;
 }
 
 .section-3, .section-4 {
@@ -3444,6 +3446,10 @@ figcaption {
   padding-right: 0;
   display: block;
   position: relative;
+}
+
+.timeline-center.top {
+  margin-top: 17px;
 }
 
 .timeline-right {
@@ -5172,7 +5178,7 @@ figcaption {
 
   .ligne-bleue.top {
     background-image: linear-gradient(#f8f7f3, gray 11%);
-    margin-top: 122px;
+    margin-top: -10px;
   }
 
   .section-3 {
@@ -5202,13 +5208,15 @@ figcaption {
 
   .timeline-center.top {
     width: 39px;
-    margin-top: 0;
+    margin-top: 6px;
   }
 
   .timeline-right {
     grid-column-gap: 15px;
     grid-row-gap: 15px;
+    justify-content: flex-start;
     width: 250px;
+    text-decoration: none;
   }
 
   .timeline-dot {
