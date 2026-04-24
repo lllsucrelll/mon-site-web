@@ -3535,6 +3535,14 @@ figcaption {
   text-align: center;
 }
 
+.button-2 {
+  text-align: center;
+  background-color: #000;
+  border-radius: 14px;
+  width: 300px;
+  line-height: 1.3;
+}
+
 @media screen and (max-width: 991px) {
   body {
     --fixed--1rem: 1.6rem;
@@ -5308,6 +5316,10 @@ figcaption {
 
 #w-node-_0632acfa-8aaa-b158-7b6a-58a2921af54f-921af54a {
   grid-area: span 1 / span 2 / span 1 / span 2;
+}
+
+#w-node-_2ec3abc0-d2ab-40eb-435c-1cbb27d7f967-921af54a {
+  grid-area: span 1 / span 1 / span 1 / span 1;
 }
 
 #w-node-_0632acfa-8aaa-b158-7b6a-58a2921af569-921af54a {
