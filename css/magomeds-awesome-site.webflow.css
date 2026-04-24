@@ -5165,20 +5165,26 @@ figcaption {
   }
 
   .ligne-bleue {
+    justify-content: center;
     width: 5px;
     height: 810px;
     margin-left: auto;
     margin-right: auto;
+    display: flex;
   }
 
   .ligne-bleue.end {
     background-image: linear-gradient(180deg, grey 77%, var(--_colors---primary--beige));
+    justify-content: center;
     height: 740px;
+    display: flex;
   }
 
   .ligne-bleue.top {
     background-image: linear-gradient(#f8f7f3, gray 11%);
+    justify-content: center;
     margin-top: -10px;
+    display: flex;
   }
 
   .section-3 {
@@ -5248,6 +5254,7 @@ figcaption {
   }
 
   .piste {
+    justify-content: center;
     width: 25px;
     height: 2100px;
     margin-top: 22px;
@@ -5255,6 +5262,7 @@ figcaption {
     margin-right: auto;
     padding-top: 0;
     padding-left: 0;
+    display: flex;
     position: absolute;
     inset: auto;
   }
