@@ -1,4 +1,4 @@
-<!DOCTYPE html><!--  This site was created in Webflow. https://webflow.com  --><!--  Last Published: Fri Apr 24 2026 08:04:56 GMT+0000 (Coordinated Universal Time)  -->
+<!DOCTYPE html><!--  This site was created in Webflow. https://webflow.com  --><!--  Last Published: Fri Apr 24 2026 08:12:12 GMT+0000 (Coordinated Universal Time)  -->
 <html data-wf-page="69b52f6ae346f9285495f3e2" data-wf-site="69b52f69e346f9285495f39a" lang="en">
 <head>
   <meta charset="utf-8">
@@ -487,56 +487,43 @@
   <script src="https://cdn.prod.website-files.com/gsap/3.15.0/SplitText.min.js" type="text/javascript"></script>
   <script src="https://cdn.prod.website-files.com/gsap/3.15.0/ScrollTrigger.min.js" type="text/javascript"></script>
   <style>
-/* Bulle qui suit le scroll */
 #timeline-dot-sticky {
   position: fixed;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   background: black;
   border-radius: 50%;
   z-index: 99;
-  transform: translateX(-50%);
-  transition: top 0.15s ease;
-  display: none;
-}
-@media (max-width: 768px) {
-  /* Sur mobile, cache la bulle originale */
-  .timeline-dot { display: none; }
+  transform: translateX(-50%) translateY(-50%);
+  box-shadow: 0 0 0 4px #f5f4f0;
+  pointer-events: none;
 }
 </style>
   <div id="timeline-dot-sticky"></div>
   <script>
 (function() {
   var dot = document.getElementById('timeline-dot-sticky');
-  var section = document.getElementById('timeline-section');
-  var originalDot = document.querySelector('.timeline-dot');
-  if (!dot || !section || !originalDot) return;
-  function getLineX() {
-  var line = document.querySelector('.timeline-center');
-  if (!line) return window.innerWidth * 0.5;
-  var rect = line.getBoundingClientRect();
-  return rect.left + rect.width / 2;
-}
+  var timelineSection = document.querySelector('.div-block-3');
+  if (!dot || !timelineSection) return;
   function update() {
-  var sRect = section.getBoundingClientRect();
-  var lineRect = document.querySelector('.timeline-center').getBoundingClientRect();
-  var viewportMid = window.innerHeight * 0.45;
-  var lineX = lineRect.left + lineRect.width / 2;
-  // Calcul de la position verticale clampée entre début et fin de section
-  var dotY = viewportMid;
-  // Si on est au-dessus de la section → bulle bloquée en haut
-  if (sRect.top > viewportMid) {
-    dotY = sRect.top;
+    var sRect = timelineSection.getBoundingClientRect();
+    var line = document.querySelector('.timeline-center');
+    if (!line) return;
+    var lineRect = line.getBoundingClientRect();
+    var lineX = lineRect.left + lineRect.width / 2;
+    var viewportMid = window.innerHeight * 0.45;
+    var dotY;
+    if (sRect.top > viewportMid) {
+      dotY = sRect.top;        // bloquée en haut
+    } else if (sRect.bottom < viewportMid) {
+      dotY = sRect.bottom;     // bloquée en bas
+    } else {
+      dotY = viewportMid;      // suit le scroll
+    }
+    dot.style.top = dotY + 'px';
+    dot.style.left = lineX + 'px';
   }
-  // Si on est en-dessous de la section → bulle bloquée en bas
-  else if (sRect.bottom < viewportMid) {
-    dotY = sRect.bottom;
-  }
-  dot.style.display = 'block';
-  dot.style.top = dotY + 'px';
-  dot.style.left = lineX + 'px';
-}
-  window.addEventListener('scroll', update);
+  window.addEventListener('scroll', update, { passive: true });
   window.addEventListener('resize', update);
   update();
 })();
