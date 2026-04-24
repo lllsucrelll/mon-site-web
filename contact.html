@@ -1,4 +1,4 @@
-<!DOCTYPE html><!--  This site was created in Webflow. https://webflow.com  --><!--  Last Published: Fri Apr 24 2026 08:48:47 GMT+0000 (Coordinated Universal Time)  -->
+<!DOCTYPE html><!--  This site was created in Webflow. https://webflow.com  --><!--  Last Published: Fri Apr 24 2026 09:19:28 GMT+0000 (Coordinated Universal Time)  -->
 <html data-wf-page="69b52f6ae346f9285495f528" data-wf-site="69b52f69e346f9285495f39a" lang="en">
 <head>
   <meta charset="utf-8">
@@ -151,8 +151,8 @@
           </div>
           <div class="footer_social">
             <a href="https://www.instagram.com/lllsucrelll/" target="_blank" class="footer_social-media-wrap w-inline-block"><img loading="lazy" src="images/social-insta.svg" alt="" class="footer_social-media"></a>
-            <a href="https://www.linkedin.com/in/magomed-dautaev/" target="_blank" class="footer_social-media-wrap w-inline-block"><img width="Auto" sizes="(max-width: 1024px) 100vw, 1024px" alt="" src="images/logo-in.png" loading="lazy" srcset="images/logo-in-p-500.png 500w, images/logo-in-p-800.png 800w, images/logo-in.png 1024w" class="footer_social-media"></a>
-            <a href="https://www.facebook.com/dautaev.mago" target="_blank" class="footer_social-media-wrap w-inline-block"><img sizes="(max-width: 1024px) 100vw, 1024px" srcset="images/facebook-logo-p-500.png 500w, images/facebook-logo-p-800.png 800w, images/facebook-logo.png 1024w" alt="" src="images/facebook-logo.png" loading="lazy" class="footer_social-media"></a>
+            <a href="https://www.linkedin.com/in/magomed-dautaev/" target="_blank" class="footer_social-media-wrap w-inline-block"><img width="Auto" sizes="100vw" alt="" src="images/logo-in.png" loading="lazy" srcset="images/logo-in-p-500.png 500w, images/logo-in-p-800.png 800w, images/logo-in.png 1024w" class="footer_social-media"></a>
+            <a href="https://www.facebook.com/dautaev.mago" target="_blank" class="footer_social-media-wrap w-inline-block"><img sizes="100vw" srcset="images/facebook-logo-p-500.png 500w, images/facebook-logo-p-800.png 800w, images/facebook-logo.png 1024w" alt="" src="images/facebook-logo.png" loading="lazy" class="footer_social-media"></a>
           </div>
         </div>
         <div class="footer_legal-links">
@@ -172,13 +172,14 @@
   <script>
 (function() {
   var dot = document.getElementById('timeline-dot-sticky');
-  var timelineSection = document.querySelector('#timeline-section');
-  if (!dot || !timelineSection) return;
+  var line = document.querySelector('.ligne-bleue');
+  var firstItem = document.querySelector('.timeline-right');
+  if (!dot || !line || !firstItem) return;
   function update() {
-    var line = document.querySelector('.ligne-bleue');
-    if (!line) return;
     var lineRect = line.getBoundingClientRect();
-    var sRect = timelineSection.getBoundingClientRect();
+    var firstRect = firstItem.getBoundingClientRect();
+    var lastSection = document.querySelector('#timeline-section');
+    var sRect = lastSection.getBoundingClientRect();
     var lineX = lineRect.left + lineRect.width / 2;
     var viewportHeight = window.visualViewport
       ? window.visualViewport.height
@@ -188,8 +189,8 @@
       ? window.visualViewport.offsetLeft
       : 0;
     var dotY;
-    if (sRect.top > viewportMid) {
-      dotY = sRect.top;
+    if (firstRect.top > viewportMid) {
+      dotY = firstRect.top;
     } else if (sRect.bottom < viewportMid) {
       dotY = sRect.bottom;
     } else {
