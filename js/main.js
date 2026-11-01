@@ -893,16 +893,18 @@
     if (redGuide) gsap.to(redGuide, { opacity: 0, duration: 0.6, onComplete: function () { redGuide.remove(); } });
   }
 
-  /* ---------- Fin : les agents forment un cercle autour de la carte CV ---------- */
+  /* ---------- Fin : les agents tournent autour du bouton « M'envoyer un e-mail » ---------- */
   function finale() {
     if (finished) return;
     finished = true;
     setRulers(false);
 
-    var r = rectOf(document.querySelector(".reel"));
-    // Cercle qui épouse la forme de la carte
+    var r = rectOf(document.querySelector(".round-link"));
+    // Ovale qui entoure le bouton (assez haut pour ne pas être tout plat)
     var cx = r.x + r.w / 2, cy = r.y + r.h / 2;
-    var rx = Math.min(r.w / 2 + 34, window.innerWidth / 2 - 8), ry = r.h / 2 + 34;
+    var rx = Math.min(r.w / 2 + 40, cx - window.scrollX - 10, window.scrollX + window.innerWidth - cx - 10);
+    rx = Math.max(rx, r.w / 2 + 6);                       // reste dans l'écran sur téléphone
+    var ry = Math.max(r.h / 2 + 34, 70);
     agents.forEach(function (a, k) {
       a.ring = true;
       a.ang = k / agents.length * Math.PI * 2;
