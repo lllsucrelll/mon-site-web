@@ -533,6 +533,7 @@ body { position: relative; }
 }
 .slider__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .slider__img--client { object-position: 70% 50%; }   /* garde le présentoir dans la moitié droite */
+.slider__img--atelier { object-position: 50% 75%; }  /* garde la main et le présentoir dans le cadre */
 .slider__top { position: absolute; inset: 0; clip-path: inset(0 calc(100% - var(--pos)) 0 0); }
 .slider__handle {
   position: absolute; top: 0; bottom: 0; left: var(--pos); width: 2px; margin-left: -1px;
