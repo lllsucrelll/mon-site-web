@@ -811,11 +811,11 @@
     })();
   });
 
-  /* ---------- Menu mobile : construit par les agents à chaque ouverture ---------- */
+  /* ---------- Menu mobile : construit par les agents à la première ouverture seulement ---------- */
   var menuEls = Array.prototype.slice.call(menu.querySelectorAll(".menu__links a, .menu__foot > *"));
-  var menuLive = [];
+  var menuLive = [], menuBuilt = false;
   onMenuToggle = function (open) {
-    // fermeture (ou réouverture) : ce qui était en cours est terminé d'un coup
+    // fermeture : ce qui était en cours est terminé d'un coup
     menuLive.forEach(function (L) {
       L.abort = true;
       var k = queue.indexOf(L);
@@ -824,7 +824,8 @@
       if (L.state !== "done") instant(L);
     });
     menuLive = [];
-    if (!open || !startTime) return;
+    if (!open || !startTime || menuBuilt) return;   // déjà construit une fois : il reste affiché tel quel
+    menuBuilt = true;
     var batch = menuLive = menuEls.map(function (el, k) {
       var L = { el: el, type: "t", i: -100 + k, state: "queued", menu: true, wantCopy: false };
       byEl.set(el, L);
