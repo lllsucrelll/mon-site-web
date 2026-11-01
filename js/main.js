@@ -603,7 +603,9 @@
     var v, el = L.el, n = el.textContent.trim().length;
     for (var tries = 0; tries < 3; tries++) {
       if (L.type === "t") {
-        v = pickWeighted([["type", 4], ["typo", n > 6 ? 3 : 0], ["rewrite", n < 70 ? 1.6 : 0], ["paste", 1.2], ["words", n > 40 ? 1.6 : 0]]);
+        // grands titres : souvent tapés en petit puis agrandis
+        var big = parseFloat(getComputedStyle(el).fontSize) >= 36 && !hasOwnTransform(el);
+        v = pickWeighted([["type", 4], ["typo", n > 6 ? 3 : 0], ["rewrite", n < 70 ? 1.6 : 0], ["paste", 1.2], ["words", n > 40 ? 1.6 : 0], ["grow", big ? 6 : 0]]);
       } else if (L.type === "i") {
         v = pickWeighted([["ph", 3], ["scan", 3], ["drag", hasOwnTransform(el) || clippedAncestor(el) ? 0 : 3]]);
       } else {
@@ -635,23 +637,29 @@
 
   async function buildStandard(L, a, r, variant) {
     var el = L.el;
+    // « grow » : le texte est d'abord tapé en petit, puis agrandi à sa vraie taille
+    var grow = variant === "grow";
+    var s = grow ? rand(0.32, 0.45) : 1;
+    var fw = r.w * s, fh = r.h * s;
     // 1. l'agent part d'un coin (ou du centre) et trace le cadre jusqu'au coin opposé
-    var origin = pickOne([[0, 0], [0, 0], [1, 0], [0, 1], [1, 1], [0.5, 0.5]]);
+    var origin = grow ? [0, 0] : pickOne([[0, 0], [0, 0], [1, 0], [0, 1], [1, 1], [0.5, 0.5]]);
     var ox = origin[0], oy = origin[1];
-    if (!await run(L, moveAgent(a, r.x + ox * r.w + rand(-4, 4), r.y + oy * r.h + rand(-4, 4), rand(0.55, 0.85)))) return;
-    marker(r.x + ox * r.w, r.y + oy * r.h);
+    if (!await run(L, moveAgent(a, r.x + ox * fw + rand(-4, 4), r.y + oy * fh + rand(-4, 4), rand(0.55, 0.85)))) return;
+    marker(r.x + ox * fw, r.y + oy * fh);
     if (Math.random() < 0.3) guideH(r.y + r.h);
     if (Math.random() < 0.2) guideV(r.x, r.y - 40, r.y + r.h + 40, "", 0.9);
     var red = L.type === "w" || (L.type === "b" && Math.random() < 0.35);
     var wf = wireframe(r, red);
-    gsap.set(wf, { left: r.x + ox * r.w, top: r.y + oy * r.h, width: 0, height: 0 });
-    if (r.w * r.h > 120000) assist(r);
+    if (grow) wf.querySelector(".wf__size").textContent = Math.round(fw) + " × " + Math.round(fh);
+    gsap.set(wf, { left: r.x + ox * fw, top: r.y + oy * fh, width: 0, height: 0 });
+    if (r.w * r.h > 120000 && !grow) assist(r);
     var tx = ox === 0.5 ? 1 : 1 - ox, ty = oy === 0.5 ? 1 : 1 - oy;
     var draw = gsap.timeline();
-    draw.to(wf, { left: r.x, top: r.y, width: r.w, height: r.h, duration: 0.5, ease: "power2.out" });
-    draw.add(moveAgent(a, r.x + tx * r.w, r.y + ty * r.h, 0.5, "power2.out"), 0);
-    draw.add(function () { marker(r.x + tx * r.w, r.y + ty * r.h); });
+    draw.to(wf, { left: r.x, top: r.y, width: fw, height: fh, duration: 0.5, ease: "power2.out" });
+    draw.add(moveAgent(a, r.x + tx * fw, r.y + ty * fh, 0.5, "power2.out"), 0);
+    draw.add(function () { marker(r.x + tx * fw, r.y + ty * fh); });
     if (!await run(L, draw)) { wf.remove(); return; }
+    if (grow) { L.moved = true; gsap.set(el, { scale: s, transformOrigin: "0% 0%" }); }
 
     // 2. parfois l'élément arrive un peu de travers, puis il est réaligné
     var nudge = (L.type === "b" ? variant !== "drop" && variant !== "pop" : L.type === "i" && variant === "ph") &&
@@ -664,11 +672,38 @@
     }
 
     // 3. le contenu apparaît
-    var anim = L.type === "t" ? typeText(L, a, variant)
+    var anim = L.type === "t" ? typeText(L, a, grow ? "type" : variant)
       : L.type === "i" ? revealImage(L, a, variant, r)
       : L.type === "w" ? revealWord(L)
       : revealBlock(L, variant);
     if (!await run(L, anim)) { wf.remove(); return; }
+
+    // 4. agrandissement : l'agent attrape la poignée en bas à droite et étire le texte
+    if (grow) {
+      if (!await run(L, moveAgent(a, r.x + fw, r.y + fh, 0.35))) { wf.remove(); return; }
+      if (a.tw) a.tw.kill();
+      var fs = parseFloat(getComputedStyle(el).fontSize);
+      var chip = mk("div", "kbd");
+      overlay.appendChild(chip);
+      var sizeTag = wf.querySelector(".wf__size");
+      var o = { k: s };
+      var stretch = gsap.to(o, {
+        k: 1, duration: 1.1, ease: "power3.inOut",
+        onUpdate: function () {
+          gsap.set(el, { scale: o.k });
+          var w = r.w * o.k, h = r.h * o.k;
+          wf.style.width = w + "px"; wf.style.height = h + "px";
+          if (sizeTag) sizeTag.textContent = Math.round(w) + " × " + Math.round(h);
+          a.step(r.x + w, r.y + h);
+          chip.textContent = "Taille " + Math.round(fs * o.k) + " px";
+          gsap.set(chip, { x: r.x + w + 12, y: r.y + h + 12 });
+        }
+      });
+      if (!await run(L, stretch)) { chip.remove(); wf.remove(); return; }
+      fadeOut(chip, 0.5);
+      gsap.set(el, { clearProps: "transform" });
+      L.moved = false;
+    }
 
     if (nudge) {
       if (!await run(L, moveAgent(a, r.x + r.w / 2 + ndx, r.y + r.h / 2 + ndy, 0.45))) { wf.remove(); return; }
