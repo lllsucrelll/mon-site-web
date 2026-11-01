@@ -4,7 +4,7 @@
    chaque fois d'une façon un peu différente : frappe au clavier (avec fautes
    corrigées), copier-coller, texte provisoire effacé, image glissée ou scannée,
    bloc qui tombe ou s'ouvre, élément mal placé puis réaligné…
-   La visite guidée fait défiler la page pendant la construction.
+   Le visiteur fait défiler lui-même : chaque partie se construit quand elle arrive à l'écran.
    GSAP + ScrollTrigger + SplitText (dossier js/)
    ========================================================= */
 (function () {
@@ -14,7 +14,7 @@
   var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var hasGsap = !!(window.gsap && window.ScrollTrigger && window.SplitText);
   var loader = document.querySelector(".loader");
-  var hud = document.querySelector(".hud");
+  var BUILD_SPEED = 1.2;   // vitesse de construction (1 = normal, plus grand = plus rapide)
 
   /* ---------- Menu mobile ---------- */
   var burger = document.querySelector(".nav__burger");
@@ -45,7 +45,6 @@
   // Sans GSAP ou avec « réduire les animations » : site statique, tout est visible.
   if (!hasGsap || reduceMotion) {
     if (loader) loader.remove();
-    if (hud) hud.remove();
     return;
   }
 
@@ -186,13 +185,6 @@
   var rulers = [mk("div", "ruler ruler--top"), mk("div", "ruler ruler--left")];
   rulers.forEach(function (r) { document.body.appendChild(r); });
 
-  var hudText = hud.querySelector(".hud__text");
-  var hudBar = hud.querySelector(".hud__bar span");
-  var tourBtn = hud.querySelector(".hud__tour");
-  var speedBtn = hud.querySelector(".hud__speed");
-  var replayBtn = hud.querySelector(".hud__replay");
-  var closeBtn = hud.querySelector(".hud__close");
-
   var layers = Array.prototype.map.call(document.querySelectorAll("[data-b]"), function (el, i) {
     var order = i;
     if (el.closest(".nav")) order += 1000;                 // la navigation est posée en dernier
@@ -205,7 +197,7 @@
 
   var total = layers.length, doneCount = 0;
   var queue = [], agents = [], MAX_AGENTS = 30, START_AGENTS = 18;
-  var speed = 1, touring = true, tourY = 0, heroDone = false, finished = false, skipped = false, scanning = true;
+  var heroDone = false, finished = false, skipped = false;
   var startTime = 0, nextStart = 0, redGuide = null, lastVariant = "";
 
   /* ---------- Agents ---------- */
@@ -240,9 +232,7 @@
     var side = Math.floor(rand(0, 4));
     var x = window.scrollX + (side === 1 ? window.innerWidth + 20 : side === 3 ? -20 : rand(0, window.innerWidth));
     var y = window.scrollY + (side === 0 ? -20 : side === 2 ? window.innerHeight + 20 : rand(0, window.innerHeight));
-    var a = spawnAgent(x, y);
-    updateHud();
-    return a;
+    return spawnAgent(x, y);
   }
   function freeAgent() {
     for (var k = 0; k < agents.length; k++) { if (!agents[k].busy && !agents[k].ring) return agents[k]; }
@@ -730,7 +720,6 @@
     L.state = "done";
     L.el.classList.remove("L");
     doneCount++;
-    updateHud();
     if (L.el === slider && !skipped) sweepSlider();
     if (doneCount >= total) finale();
   }
@@ -773,73 +762,25 @@
     if (added) { queue.sort(function (x, y) { return x.i - y.i; }); pump(); }
   }, { rootMargin: "0px 0px -5% 0px" });
 
-  /* ---------- Barre de contrôle ---------- */
-  function updateHud() {
-    if (scanning || finished) return;
-    hudText.innerHTML = "<b>" + agents.length + " agents</b> · " + doneCount + " / " + total + " calques";
-    hudBar.style.width = (doneCount / total * 100) + "%";
-  }
-  function setTour(on) {
-    touring = on && !finished;
-    tourBtn.classList.toggle("is-on", touring);
-    tourBtn.setAttribute("aria-pressed", String(touring));
-    tourBtn.textContent = touring ? "Visite en cours" : "Visite";
-    root.style.scrollBehavior = touring ? "auto" : "";
-    tourY = window.scrollY;
-  }
-  tourBtn.addEventListener("click", function () { setTour(!touring); });
-  speedBtn.addEventListener("click", function () {
-    speed = speed === 1 ? 2 : 1;
-    speedBtn.textContent = speed + "x";
-    gsap.globalTimeline.timeScale(speed);
-  });
-  replayBtn.addEventListener("click", function () { window.scrollTo(0, 0); location.reload(); });
-  closeBtn.addEventListener("click", skipAll);
-
-  // Si le visiteur fait défiler lui-même, la visite s'arrête
-  function userTookOver(e) {
-    if (!touring) return;
-    if (e.type === "keydown" && ["ArrowDown", "ArrowUp", "PageDown", "PageUp", " ", "Home", "End"].indexOf(e.key) < 0) return;
-    if (e.target && e.target.closest && e.target.closest(".hud")) return;
-    setTour(false);
-  }
-  ["wheel", "touchstart", "keydown", "mousedown"].forEach(function (t) { window.addEventListener(t, userTookOver, { passive: true }); });
-
-  // Défilement automatique : lent pendant que les agents travaillent, plus rapide sinon
-  gsap.ticker.add(function (time, dt) {
+  // Le premier écran est terminé dès que les agents n'ont plus rien à faire : la ligne guide rouge s'efface
+  gsap.ticker.add(function () {
+    if (heroDone || !startTime) return;
     var busy = queue.length > 0 || agents.some(function (x) { return x.busy; });
-    // Le premier écran est terminé dès que les agents n'ont plus rien à faire
-    if (!heroDone && startTime && !busy && performance.now() - startTime > 1200) onHeroDone();
-    if (!touring || !heroDone || finished) return;
-    // Toute la page en ~1 min : on ralentit quand beaucoup d'éléments attendent leur agent
-    var max = root.scrollHeight - window.innerHeight;
-    var v = (max / 48) * (queue.length > 4 ? 0.25 : queue.length ? 0.5 : busy ? 0.8 : 1.6) * speed;
-    tourY = Math.min(tourY + v * Math.min(dt, 64) / 1000, max);
-    window.scrollTo(0, Math.round(tourY));
-    if (tourY >= max - 1 && !busy) setTour(false);
+    if (!busy && performance.now() - startTime > 1200) onHeroDone();
   });
 
   function onHeroDone() {
     heroDone = true;
     if (redGuide) gsap.to(redGuide, { opacity: 0, duration: 0.6, onComplete: function () { redGuide.remove(); } });
-    tourY = window.scrollY;
   }
 
   /* ---------- Fin : les agents forment un cercle autour de la carte CV ---------- */
   function finale() {
     if (finished) return;
-    var wasTouring = touring;
     finished = true;
-    setTour(false);
-    var secs = ((performance.now() - startTime) / 1000).toFixed(1).replace(".", ",");
-    hudText.innerHTML = "Construit par <b>" + agents.length + " agents</b> en <b>" + secs + " s</b>";
-    hudBar.style.width = "100%";
-    tourBtn.hidden = true; speedBtn.hidden = true; replayBtn.hidden = false;
     setRulers(false);
 
-    var card = document.querySelector(".reel");
-    if (wasTouring) window.scrollTo({ top: Math.max(0, rectOf(card).y - window.innerHeight * 0.25), behavior: "smooth" });
-    var r = rectOf(card);
+    var r = rectOf(document.querySelector(".reel"));
     // Cercle qui épouse la forme de la carte
     var cx = r.x + r.w / 2, cy = r.y + r.h / 2;
     var rx = Math.min(r.w / 2 + 34, window.innerWidth / 2 - 8), ry = r.h / 2 + 34;
@@ -858,24 +799,11 @@
     });
   }
 
-  /* ---------- Passer l'animation (bouton ×) ---------- */
-  function skipAll() {
-    skipped = true;
-    setTour(false);
-    io.disconnect();
-    queue.length = 0;
-    layers.forEach(function (L) { if (L.cur) L.cur.progress(1); });
-    layers.forEach(function (L) { if (L.state !== "done") instant(L); });
-    gsap.to(overlay, { opacity: 0, duration: 0.4, onComplete: function () { overlay.remove(); } });
-    rulers.forEach(function (r) { r.remove(); });
-    hud.classList.add("is-hidden");
-  }
-
   /* =========================================================
      3. Démarrage
      ========================================================= */
   scrollEffects();
-  hud.classList.add("is-scanning");
+  gsap.globalTimeline.timeScale(BUILD_SPEED);
   var swarm = createSwarm(document.querySelector(".loader__swarm"), START_AGENTS);
   var t0 = performance.now();
   var pageLoaded = document.readyState === "complete";
@@ -883,15 +811,13 @@
 
   function waitThenBuild() {
     var elapsed = performance.now() - t0;
-    if ((pageLoaded && elapsed > 1700) || elapsed > 6000) document.fonts.ready.then(beginBuild);
+    if ((pageLoaded && elapsed > 1500) || elapsed > 6000) document.fonts.ready.then(beginBuild);
     else setTimeout(waitThenBuild, 100);
   }
   waitThenBuild();
 
   function beginBuild() {
     jumpTo(0);
-    scanning = false;
-    hud.classList.remove("is-scanning");
     startTime = performance.now();
     moveAnchors();
 
@@ -923,10 +849,8 @@
 
     // Arrivée depuis un ancien lien (#parcours…) : on va directement à la section
     var target = location.hash.length > 1 && document.querySelector(location.hash);
-    if (target) { setTour(false); jumpTo(rectOf(target).y); root.style.scrollBehavior = ""; }
-    else setTour(true);
+    if (target) jumpTo(rectOf(target).y);
+    root.style.scrollBehavior = "";   // le visiteur fait défiler lui-même (liens du menu en douceur)
 
-    updateHud();
-    layers.forEach(function (L) { if (L.state === "pending") io.observe(L.el); });
-  }
+    layers.forEach(function (L) { if (L.state === "pending") io.observe(L.el); });  }
 })();
