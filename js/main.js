@@ -941,48 +941,78 @@
     }
 
     function addGuide(a) {
-      a.orbit = false; a.busy = true; a.guide = true;
+      if (a.tw) a.tw.kill();
+      a.orbit = false; a.busy = true; a.guide = true; a.swim = true;
+      a.vx = 0; a.vy = 0; a.phase = rand(0, 6);
       a.el.classList.add("agent--guide");
       a.el.addEventListener("click", goToButton);
       guides.push(a);
-      joinVisitor(a);
+      pickTarget(a);
     }
-    // vole depuis l'endroit de la page où elle est jusqu'à l'écran du visiteur
-    function joinVisitor(a) {
-      if (!a.guide) return;
-      a.mode = "fly"; a.lockRot = null;
-      var below = buttonBelow();
-      var tx = window.scrollX + rand(40, window.innerWidth - 40);
-      var ty = window.scrollY + (below ? rand(window.innerHeight * 0.5, window.innerHeight - 110) : rand(100, window.innerHeight * 0.5));
-      var dist = Math.sqrt((tx - a.x) * (tx - a.x) + (ty - a.y) * (ty - a.y));
-      moveAgent(a, tx, ty, Math.min(Math.max(dist / 900, 1), 2.6), "sine.inOut")
-        .eventCallback("onComplete", function () { hover(a, 0); });
-    }
-    // flotte tranquillement sur place ; de temps en temps seulement, un petit élan vers le bouton
-    // (une seule flèche à la fois, au maximum toutes les 18 à 24 secondes)
+
+    /* Nage « comme des poissons » : chaque flèche vise un point de l'écran qui change
+       toutes les 2-3 s, tourne progressivement (inertie) et ondule légèrement.
+       Pendant le défilement elles restent dans leur coin de page ; une fois le visiteur
+       arrêté, elles nagent jusqu'à lui, plus vite si elles sont loin, puis ralentissent. */
     var nextNudge = performance.now() + 9000;
-    function hover(a, n) {
-      if (!a.guide) return;
-      a.mode = "hover";
-      var below = buttonBelow();
-      if (n >= 2 && performance.now() > nextNudge) {
-        nextNudge = performance.now() + rand(18000, 24000);
-        a.lockRot = below ? 90 : -90;
-        if (Math.random() < 0.5) badge(a, "✉");
-        var y0 = a.y;
-        moveAgent(a, a.x, y0 + (below ? 1 : -1) * rand(40, 60), 0.5, "power2.out").eventCallback("onComplete", function () {
-          moveAgent(a, a.x, y0, 0.6, "power2.inOut").eventCallback("onComplete", function () { a.lockRot = null; hover(a, 0); });
-        });
+    function targetInView(a) { var vy = a.ty - window.scrollY; return vy > 60 && vy < window.innerHeight - 60; }
+    function pickTarget(a) {
+      var now = performance.now(), vw = window.innerWidth, vh = window.innerHeight, sx = window.scrollX, sy = window.scrollY;
+      a.retarget = now + rand(1600, 3400);
+      if (scrolling()) {                                   // on reste dans sa section
+        a.tx = a.x + rand(-90, 90); a.ty = a.y + rand(-70, 70);
         return;
       }
-      var minX = window.scrollX + 30, maxX = window.scrollX + window.innerWidth - 30;
-      var minY = window.scrollY + 90, maxY = window.scrollY + window.innerHeight - 90;
-      var tx = Math.min(Math.max(a.x + rand(-40, 40), minX), maxX);
-      var ty = Math.min(Math.max(a.y + rand(-30, 30), minY), maxY);
-      moveAgent(a, tx, ty, rand(1.8, 3), "sine.inOut").eventCallback("onComplete", function () { hover(a, n + 1); });
+      var lead = guides[0];
+      if (a === lead && guideInView(a) && now > nextNudge) {
+        // de temps en temps, un petit tour vers le bord de l'écran du côté du bouton
+        nextNudge = now + rand(18000, 24000);
+        a.tx = sx + rand(0.3, 0.7) * vw;
+        a.ty = sy + (buttonBelow() ? vh - 70 : 90);
+        a.retarget = now + 1500;
+        if (Math.random() < 0.5) badge(a, "✉");
+        return;
+      }
+      if (a !== lead && lead && lead.tx != null && Math.random() < 0.6) {
+        // nage près de l'autre flèche, comme un petit banc de poissons
+        a.tx = Math.min(Math.max(lead.tx + rand(-120, 120), sx + 40), sx + vw - 40);
+        a.ty = Math.min(Math.max(lead.ty + rand(-90, 90), sy + 110), sy + vh - 110);
+      } else {
+        a.tx = sx + rand(40, vw - 40);
+        a.ty = sy + rand(110, vh - 110);
+      }
     }
+    var lastSwim = performance.now();
+    gsap.ticker.add(function () {
+      var now = performance.now(), dt = Math.min((now - lastSwim) / 1000, 0.05);
+      lastSwim = now;
+      guides.forEach(function (a) {
+        if (!a.swim) return;
+        if (now > a.retarget || (!scrolling() && !targetInView(a))) pickTarget(a);
+        var dx = a.tx - a.x, dy = a.ty - a.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+        // flâne doucement à l'écran ; nage plus vite pour rejoindre le visiteur s'il est loin
+        var cruise = guideInView(a) ? 150 : Math.min(170 + d * 0.45, 650);
+        var speed = Math.min(cruise, d * 1.4);
+        var wx = dx / d * speed, wy = dy / d * speed;
+        guides.forEach(function (b) {                       // ne se marchent pas dessus
+          if (b === a) return;
+          var ex = a.x - b.x, ey = a.y - b.y, e = Math.sqrt(ex * ex + ey * ey);
+          if (e > 0.1 && e < 70) { wx += ex / e * 90; wy += ey / e * 90; }
+        });
+        // inertie : les virages se font progressivement
+        var k = Math.min(1, dt * 1.7);
+        a.vx += (wx - a.vx) * k;
+        a.vy += (wy - a.vy) * k;
+        // ondulation de « queue de poisson »
+        a.phase += dt * 7;
+        var v = Math.sqrt(a.vx * a.vx + a.vy * a.vy) || 1;
+        var wig = Math.sin(a.phase) * v * 0.22;
+        a.step(a.x + (a.vx - a.vy / v * wig) * dt, a.y + (a.vy + a.vx / v * wig) * dt);
+      });
+    });
+
     function backToRing(a) {
-      a.guide = false; a.lockRot = null; a.mode = null;
+      a.guide = false; a.swim = false;
       a.el.classList.remove("agent--guide");
       a.el.removeEventListener("click", goToButton);
       guides.splice(guides.indexOf(a), 1);
@@ -993,8 +1023,6 @@
       if (scrolling()) return;                   // on attend que le visiteur s'arrête
       var ring = agents.filter(function (a) { return a.orbit && a.ring && !a.guide; });
       while (guides.length < 2 && ring.length) addGuide(ring.splice(Math.floor(Math.random() * ring.length), 1)[0]);
-      // restées dans une autre section : elles viennent le rejoindre
-      guides.forEach(function (a) { if (a.mode === "hover" && !guideInView(a)) joinVisitor(a); });
     }, 600);
   }
 
