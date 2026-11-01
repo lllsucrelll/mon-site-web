@@ -19,12 +19,15 @@
   /* ---------- Menu mobile ---------- */
   var burger = document.querySelector(".nav__burger");
   var menu = document.querySelector(".menu");
+  var onMenuToggle = null;   // branché plus bas : les agents construisent le menu à son ouverture
   function setMenu(open) {
+    if (open === root.classList.contains("menu-open")) return;
     root.classList.toggle("menu-open", open);
     burger.setAttribute("aria-expanded", String(open));
     burger.setAttribute("aria-label", open ? "Fermer le menu" : "Ouvrir le menu");
     menu.setAttribute("aria-hidden", String(!open));
     document.body.style.overflow = open ? "hidden" : "";
+    if (onMenuToggle) onMenuToggle(open);
   }
   burger.addEventListener("click", function () { setMenu(!root.classList.contains("menu-open")); });
   menu.querySelectorAll("a").forEach(function (a) { a.addEventListener("click", function () { setMenu(false); }); });
@@ -234,8 +237,13 @@
     var y = window.scrollY + (side === 0 ? -20 : side === 2 ? window.innerHeight + 20 : rand(0, window.innerHeight));
     return spawnAgent(x, y);
   }
-  function freeAgent() {
-    for (var k = 0; k < agents.length; k++) { if (!agents[k].busy && !agents[k].ring) return agents[k]; }
+  function freeAgent(allowRing) {
+    for (var k = 0; k < agents.length; k++) {
+      var a = agents[k];
+      if (a.busy || (a.ring && !allowRing)) continue;
+      a.ring = false; a.orbit = false;          // un agent du cercle final peut venir aider (menu)
+      return a;
+    }
     return null;
   }
   // Trajet courbe (comme une vraie main sur une souris)
@@ -605,17 +613,19 @@
   }
 
   /* ---------- Construction d'un élément ---------- */
-  async function run(L, anim) { L.cur = anim; await anim; return !skipped; }
+  async function run(L, anim) { L.cur = anim; await anim; return !skipped && !L.abort; }
 
   async function buildLayer(L, a) {
     L.state = "building";
     var r = rectOf(L.el);
-    if (skipped || r.w < 2 || r.h < 2 || !inView(r, 250)) { instant(L); release(a); return; }
+    if (skipped || r.w < 2 || r.h < 2) { instant(L); release(a); return; }
+    // Passé trop vite (défilement rapide, clic dans le menu) : il attendra qu'on revienne le regarder
+    if (!inView(r, 60)) { backToPending(L); release(a); return; }
     var src = copySource(L);
     var variant = chooseVariant(L, src);
     if (variant === "copy") await buildByCopy(L, a, src);
     else await buildStandard(L, a, r, variant);
-    if (skipped) instant(L); else finish(L);
+    if (skipped || L.abort) instant(L); else finish(L);
     release(a);
   }
 
@@ -719,9 +729,17 @@
     if (L.state === "done") return;
     L.state = "done";
     L.el.classList.remove("L");
+    if (L.menu) return;                       // le menu mobile ne compte pas dans la page
     doneCount++;
     if (L.el === slider && !skipped) sweepSlider();
     if (doneCount >= total) finale();
+  }
+
+  // L'élément n'est plus à l'écran : il reste à construire, on le surveille à nouveau
+  function backToPending(L) {
+    L.state = "pending";
+    io.unobserve(L.el);
+    io.observe(L.el);
   }
 
   function release(a) {
@@ -736,7 +754,10 @@
       var idx = -1;
       for (var q = 0; q < queue.length; q++) { if (!waitsForSource(queue[q])) { idx = q; break; } }
       if (idx < 0) break;                     // tout ce qui reste attend d'être copié
-      var a = freeAgent();
+      // déjà sorti de l'écran avant qu'un agent soit libre : on ne le construit pas maintenant
+      var rq = rectOf(queue[idx].el);
+      if (!queue[idx].menu && rq.w >= 2 && !inView(rq, 60)) { backToPending(queue.splice(idx, 1)[0]); continue; }
+      var a = freeAgent() || freeAgent(true);
       if (!a) {
         if (agents.length < MAX_AGENTS && queue.length > 3) a = spawnFromEdge();
         else break;
@@ -751,7 +772,9 @@
   }
 
   // Seule la partie que l'on regarde est construite
+  var navigating = false;   // vrai pendant le trajet d'un lien du menu : on ne construit rien en passant
   var io = new IntersectionObserver(function (entries) {
+    if (navigating) return;
     var added = false;
     entries.forEach(function (e) {
       if (!e.isIntersecting) return;
@@ -761,6 +784,62 @@
     });
     if (added) { queue.sort(function (x, y) { return x.i - y.i; }); pump(); }
   }, { rootMargin: "0px 0px -5% 0px" });
+
+  // Liens internes (menu, boutons, logo) : on glisse jusqu'à la section,
+  // et seule la zone d'arrivée est construite
+  document.addEventListener("click", function (e) {
+    var link = e.target.closest && e.target.closest('a[href^="#"]');
+    if (!link || e.defaultPrevented) return;
+    var id = link.getAttribute("href");
+    var target = id === "#top" ? document.body : id.length > 1 && document.querySelector(id);
+    if (!target) return;
+    e.preventDefault();
+    setMenu(false);
+    var top = id === "#top" ? 0 : rectOf(target).y;
+    navigating = true;
+    if (history.pushState) history.pushState(null, "", id === "#top" ? location.pathname : id);
+    window.scrollTo({ top: top, behavior: "smooth" });
+    // attendre la fin du glissement, puis regarder ce qui est à l'écran
+    var last = -1, still = 0, t0 = performance.now();
+    (function check() {
+      var y = window.scrollY;
+      if (Math.abs(y - last) < 1) still++; else { still = 0; last = y; }
+      if (still >= 5 || performance.now() - t0 > 3000) {
+        navigating = false;
+        layers.forEach(function (L) { if (L.state === "pending") { io.unobserve(L.el); io.observe(L.el); } });
+      } else setTimeout(check, 60);
+    })();
+  });
+
+  /* ---------- Menu mobile : construit par les agents à chaque ouverture ---------- */
+  var menuEls = Array.prototype.slice.call(menu.querySelectorAll(".menu__links a, .menu__foot > *"));
+  var menuLive = [];
+  onMenuToggle = function (open) {
+    // fermeture (ou réouverture) : ce qui était en cours est terminé d'un coup
+    menuLive.forEach(function (L) {
+      L.abort = true;
+      var k = queue.indexOf(L);
+      if (k > -1) queue.splice(k, 1);
+      if (L.cur) L.cur.progress(1);
+      if (L.state !== "done") instant(L);
+    });
+    menuLive = [];
+    if (!open || !startTime) return;
+    var batch = menuLive = menuEls.map(function (el, k) {
+      var L = { el: el, type: "t", i: -100 + k, state: "queued", menu: true, wantCopy: false };
+      byEl.set(el, L);
+      el.classList.add("L");
+      return L;
+    });
+    // on laisse le panneau s'ouvrir, puis les agents arrivent
+    gsap.delayedCall(0.3, function () {
+      if (batch !== menuLive) return;
+      batch.forEach(function (L) { queue.push(L); });
+      queue.sort(function (x, y) { return x.i - y.i; });
+      nextStart = 0;
+      pump();
+    });
+  };
 
   // Le premier écran est terminé dès que les agents n'ont plus rien à faire : la ligne guide rouge s'efface
   gsap.ticker.add(function () {
