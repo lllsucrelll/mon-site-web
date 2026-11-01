@@ -569,29 +569,33 @@
   }
 
   /* ---------- Choix d'une façon de construire (jamais deux fois de suite la même) ---------- */
+  // Éléments « de la même famille » placés avant lui dans une liste (le plus proche d'abord)
+  function cls(el) { return el.className.replace(/\bL\b|is-active/g, "").trim(); }
+  function prevSameKind(L) {
+    var out = [];
+    if (L.el.querySelector("[data-b]")) return out;
+    for (var p = L.el.previousElementSibling; p; p = p.previousElementSibling) {
+      var S = byEl.get(p);
+      if (S && S.type === L.type && p.tagName === L.el.tagName && cls(p) === cls(L.el) && !p.querySelector("[data-b]")) out.push(S);
+    }
+    return out;
+  }
+  // Copie possible depuis n'importe quel élément déjà terminé de la liste (pas seulement le précédent)
   function copySource(L) {
-    var p = L.el.previousElementSibling;
-    if (!p) return null;
-    var S = byEl.get(p);
-    if (!S || S.state !== "done" || S.type !== L.type) return null;
-    if (p.tagName !== L.el.tagName || p.className.replace("is-active", "").trim() !== L.el.className.replace(/\bL\b|is-active/g, "").trim()) return null;
-    if (L.el.querySelector("[data-b]") || p.querySelector("[data-b]")) return null;
-    if (!inView(rectOf(p), 0)) return null;
-    return p;
+    var sibs = prevSameKind(L);
+    for (var k = 0; k < sibs.length; k++) {
+      if (sibs[k].state === "done" && inView(rectOf(sibs[k].el), 0)) return sibs[k].el;
+    }
+    return null;
   }
-  // Élément d'une liste (même type que le précédent) : il peut attendre que le précédent soit fini pour le copier
-  function sameKindPrev(L) {
-    var p = L.el.previousElementSibling, S = p && byEl.get(p);
-    if (!S || S.type !== L.type || p.tagName !== L.el.tagName) return null;
-    if (L.el.querySelector("[data-b]") || p.querySelector("[data-b]")) return null;
-    return S;
-  }
+  // Un élément qui veut copier attend seulement qu'UN élément de sa liste soit fini :
+  // ensuite toutes les copies se font en même temps (plus de longue file d'attente)
   function waitsForSource(L) {
-    if (L.wantCopy === undefined) L.wantCopy = !!sameKindPrev(L) && Math.random() < 0.45;
+    if (L.wantCopy === undefined) L.wantCopy = prevSameKind(L).length > 0 && Math.random() < 0.35;
     if (!L.wantCopy) return false;
-    var S = sameKindPrev(L);
-    // on n'attend que si le précédent est lui-même en cours (jamais s'il n'est pas à l'écran)
-    return !!S && (S.state === "queued" || S.state === "building");
+    var sibs = prevSameKind(L);
+    if (sibs.some(function (S) { return S.state === "done"; })) return false;
+    return sibs.some(function (S) { return S.state === "queued" || S.state === "building"; });
   }
   function chooseVariant(L, src) {
     if (L.type === "w") return "word";
@@ -685,10 +689,10 @@
   // Copier-coller : l'agent copie l'élément précédent, le colle, puis remplace le texte
   async function buildByCopy(L, a, src) {
     var el = L.el, rs = rectOf(src);
-    if (!await run(L, moveAgent(a, rs.x + rs.w * rand(0.3, 0.7), rs.y + rs.h * 0.5, rand(0.55, 0.8)))) return;
-    selRect(rs, 0.6);
+    if (!await run(L, moveAgent(a, rs.x + rs.w * rand(0.3, 0.7), rs.y + rs.h * 0.5, rand(0.45, 0.65)))) return;
+    selRect(rs, 0.45);
     badge(a, "Ctrl C");
-    if (!await run(L, pause(0.45))) return;
+    if (!await run(L, pause(0.3))) return;
 
     L.orig = el.innerHTML;
     el.innerHTML = src.innerHTML;
@@ -697,21 +701,21 @@
     L.moved = true;
     gsap.set(el, { x: rs.x - rd.x, y: rs.y - rd.y, opacity: 0.55 });
     var drag = gsap.timeline();
-    drag.to(el, { x: 0, y: 0, opacity: 1, duration: 0.7, ease: "power3.inOut" });
-    drag.add(moveAgent(a, rd.x + rd.w * 0.5, rd.y + rd.h * 0.5, 0.7, "power3.inOut"), 0);
+    drag.to(el, { x: 0, y: 0, opacity: 1, duration: 0.55, ease: "power3.inOut" });
+    drag.add(moveAgent(a, rd.x + rd.w * 0.5, rd.y + rd.h * 0.5, 0.55, "power3.inOut"), 0);
     if (!await run(L, drag)) return;
     gsap.set(el, { clearProps: "transform,opacity" });
     L.moved = false;
     badge(a, "Ctrl V");
     var wf = wireframe(rd, false);
-    if (!await run(L, pause(0.3))) { wf.remove(); return; }
+    if (!await run(L, pause(0.2))) { wf.remove(); return; }
 
     // le texte copié est sélectionné, effacé, et le bon texte est tapé
-    selRect(rd, 0.3);
-    if (!await run(L, pause(0.35))) { wf.remove(); return; }
+    selRect(rd, 0.25);
+    if (!await run(L, pause(0.25))) { wf.remove(); return; }
     el.innerHTML = L.orig;
     L.orig = null;
-    if (!await run(L, typeText(L, a, Math.random() < 0.3 ? "typo" : "type"))) { wf.remove(); return; }
+    if (!await run(L, typeText(L, a, Math.random() < 0.2 ? "typo" : "type"))) { wf.remove(); return; }
     fadeOut(wf, 0.15);
   }
 
