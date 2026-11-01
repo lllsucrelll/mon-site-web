@@ -920,16 +920,21 @@
         if (a.ring) a.ang += 0.005;
         if (a.orbit) a.step(ringX(a), ringY(a));
       });
-      // les flèches « guides » flottent dans l'écran, même quand on fait défiler
-      guides.forEach(function (a) { a.step(a.v.x + window.scrollX, a.v.y + window.scrollY); });
     });
 
-    /* Ailleurs sur la page : une ou deux flèches viennent voler dans l'écran
-       pour inviter (sans forcer) à revenir au bouton e-mail */
+    /* Ailleurs sur la page : une ou deux flèches viennent rejoindre le visiteur
+       pour l'inviter (sans forcer) à revenir au bouton e-mail.
+       Elles restent dans la page comme les autres : si on défile vite, elles restent
+       dans leur section, puis viennent nous rejoindre une fois qu'on s'est arrêté. */
     var button = document.querySelector(".round-link");
     var guides = [];
+    var lastScroll = 0;
+    window.addEventListener("scroll", function () { lastScroll = performance.now(); }, { passive: true });
+    function scrolling() { return performance.now() - lastScroll < 500; }
     function buttonBox() { return button.getBoundingClientRect(); }
     function buttonVisible() { var b = buttonBox(); return b.bottom > 0 && b.top < window.innerHeight; }
+    function buttonBelow() { return buttonBox().top > window.innerHeight / 2; }
+    function guideInView(a) { var vy = a.y - window.scrollY; return vy > 40 && vy < window.innerHeight - 40; }
     function goToButton() {
       var b = buttonBox();
       window.scrollTo({ top: b.top + window.scrollY - window.innerHeight / 2, behavior: "smooth" });
@@ -937,40 +942,47 @@
 
     function addGuide(a) {
       a.orbit = false; a.busy = true; a.guide = true;
-      if (a.tw) a.tw.kill();
-      // elle entre par le bord de l'écran situé du côté du bouton
-      var vx = a.x - window.scrollX, vy = a.y - window.scrollY;
-      a.v = { x: Math.min(Math.max(vx, 20), window.innerWidth - 20), y: Math.min(Math.max(vy, -30), window.innerHeight + 30) };
       a.el.classList.add("agent--guide");
       a.el.addEventListener("click", goToButton);
       guides.push(a);
-      guideLoop(a);
+      joinVisitor(a);
     }
-    function guideLoop(a) {
+    // vole depuis l'endroit de la page où elle est jusqu'à l'écran du visiteur
+    function joinVisitor(a) {
       if (!a.guide) return;
-      var below = buttonBox().top > window.innerHeight / 2;
-      var tx = rand(40, window.innerWidth - 40);
-      var ty = below ? rand(window.innerHeight * 0.55, window.innerHeight - 110) : rand(90, window.innerHeight * 0.45);
-      a.gt = gsap.to(a.v, {
-        x: tx, y: ty, duration: rand(1.8, 2.8), ease: "sine.inOut",
-        onComplete: function () {
-          if (!a.guide) return;
-          // petit élan vers le bouton, la flèche pointe dans sa direction
-          a.lockRot = below ? 90 : -90;
-          if (Math.random() < 0.4) badge(a, "✉");
-          a.gt = gsap.to(a.v, {
-            y: "+=" + (below ? 1 : -1) * rand(40, 70), duration: 0.5, ease: "power2.out", yoyo: true, repeat: 1, repeatDelay: 0.25,
-            onComplete: function () {
-              a.lockRot = null;
-              a.gt = gsap.delayedCall(rand(0.5, 1.4), function () { guideLoop(a); });
-            }
-          });
-        }
-      });
+      a.mode = "fly"; a.lockRot = null;
+      var below = buttonBelow();
+      var tx = window.scrollX + rand(40, window.innerWidth - 40);
+      var ty = window.scrollY + (below ? rand(window.innerHeight * 0.5, window.innerHeight - 110) : rand(100, window.innerHeight * 0.5));
+      var dist = Math.sqrt((tx - a.x) * (tx - a.x) + (ty - a.y) * (ty - a.y));
+      moveAgent(a, tx, ty, Math.min(Math.max(dist / 900, 1), 2.6), "sine.inOut")
+        .eventCallback("onComplete", function () { hover(a, 0); });
+    }
+    // flotte tranquillement sur place ; de temps en temps seulement, un petit élan vers le bouton
+    // (une seule flèche à la fois, au maximum toutes les 18 à 24 secondes)
+    var nextNudge = performance.now() + 9000;
+    function hover(a, n) {
+      if (!a.guide) return;
+      a.mode = "hover";
+      var below = buttonBelow();
+      if (n >= 2 && performance.now() > nextNudge) {
+        nextNudge = performance.now() + rand(18000, 24000);
+        a.lockRot = below ? 90 : -90;
+        if (Math.random() < 0.5) badge(a, "✉");
+        var y0 = a.y;
+        moveAgent(a, a.x, y0 + (below ? 1 : -1) * rand(40, 60), 0.5, "power2.out").eventCallback("onComplete", function () {
+          moveAgent(a, a.x, y0, 0.6, "power2.inOut").eventCallback("onComplete", function () { a.lockRot = null; hover(a, 0); });
+        });
+        return;
+      }
+      var minX = window.scrollX + 30, maxX = window.scrollX + window.innerWidth - 30;
+      var minY = window.scrollY + 90, maxY = window.scrollY + window.innerHeight - 90;
+      var tx = Math.min(Math.max(a.x + rand(-40, 40), minX), maxX);
+      var ty = Math.min(Math.max(a.y + rand(-30, 30), minY), maxY);
+      moveAgent(a, tx, ty, rand(1.8, 3), "sine.inOut").eventCallback("onComplete", function () { hover(a, n + 1); });
     }
     function backToRing(a) {
-      a.guide = false; a.lockRot = null;
-      if (a.gt) a.gt.kill();
+      a.guide = false; a.lockRot = null; a.mode = null;
       a.el.classList.remove("agent--guide");
       a.el.removeEventListener("click", goToButton);
       guides.splice(guides.indexOf(a), 1);
@@ -978,8 +990,11 @@
     }
     setInterval(function () {
       if (buttonVisible()) { guides.slice().forEach(backToRing); return; }
+      if (scrolling()) return;                   // on attend que le visiteur s'arrête
       var ring = agents.filter(function (a) { return a.orbit && a.ring && !a.guide; });
       while (guides.length < 2 && ring.length) addGuide(ring.splice(Math.floor(Math.random() * ring.length), 1)[0]);
+      // restées dans une autre section : elles viennent le rejoindre
+      guides.forEach(function (a) { if (a.mode === "hover" && !guideInView(a)) joinVisitor(a); });
     }, 600);
   }
 
