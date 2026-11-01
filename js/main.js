@@ -220,7 +220,9 @@
     a.set = function () { a.el.style.transform = "translate(" + a.x + "px," + a.y + "px) rotate(" + a.rot + "deg)"; };
     a.step = function (nx, ny) {
       var dx = nx - a.x, dy = ny - a.y;
-      if (dx * dx + dy * dy > 0.4) {
+      if (a.lockRot != null) {
+        a.rot += (((a.lockRot - a.rot + 540) % 360) - 180) * 0.2;   // pointe dans une direction fixe
+      } else if (dx * dx + dy * dy > 0.4) {
         var t = Math.atan2(dy, dx) * 180 / Math.PI;
         a.rot += (((t - a.rot + 540) % 360) - 180) * 0.3;
       }
@@ -905,19 +907,80 @@
     var rx = Math.min(r.w / 2 + 40, cx - window.scrollX - 10, window.scrollX + window.innerWidth - cx - 10);
     rx = Math.max(rx, r.w / 2 + 6);                       // reste dans l'écran sur téléphone
     var ry = Math.max(r.h / 2 + 34, 70);
+    function ringX(a) { return cx + Math.cos(a.ang) * rx; }
+    function ringY(a) { return cy + Math.sin(a.ang) * ry; }
     agents.forEach(function (a, k) {
       a.ring = true;
       a.ang = k / agents.length * Math.PI * 2;
-      moveAgent(a, cx + Math.cos(a.ang) * rx, cy + Math.sin(a.ang) * ry, rand(1.2, 1.9))
+      moveAgent(a, ringX(a), ringY(a), rand(1.2, 1.9))
         .eventCallback("onComplete", function () { a.orbit = true; });
     });
     gsap.ticker.add(function () {
       agents.forEach(function (a) {
-        if (!a.orbit) return;
-        a.ang += 0.005;
-        a.step(cx + Math.cos(a.ang) * rx, cy + Math.sin(a.ang) * ry);
+        if (a.ring) a.ang += 0.005;
+        if (a.orbit) a.step(ringX(a), ringY(a));
       });
+      // les flèches « guides » flottent dans l'écran, même quand on fait défiler
+      guides.forEach(function (a) { a.step(a.v.x + window.scrollX, a.v.y + window.scrollY); });
     });
+
+    /* Ailleurs sur la page : une ou deux flèches viennent voler dans l'écran
+       pour inviter (sans forcer) à revenir au bouton e-mail */
+    var button = document.querySelector(".round-link");
+    var guides = [];
+    function buttonBox() { return button.getBoundingClientRect(); }
+    function buttonVisible() { var b = buttonBox(); return b.bottom > 0 && b.top < window.innerHeight; }
+    function goToButton() {
+      var b = buttonBox();
+      window.scrollTo({ top: b.top + window.scrollY - window.innerHeight / 2, behavior: "smooth" });
+    }
+
+    function addGuide(a) {
+      a.orbit = false; a.busy = true; a.guide = true;
+      if (a.tw) a.tw.kill();
+      // elle entre par le bord de l'écran situé du côté du bouton
+      var vx = a.x - window.scrollX, vy = a.y - window.scrollY;
+      a.v = { x: Math.min(Math.max(vx, 20), window.innerWidth - 20), y: Math.min(Math.max(vy, -30), window.innerHeight + 30) };
+      a.el.classList.add("agent--guide");
+      a.el.addEventListener("click", goToButton);
+      guides.push(a);
+      guideLoop(a);
+    }
+    function guideLoop(a) {
+      if (!a.guide) return;
+      var below = buttonBox().top > window.innerHeight / 2;
+      var tx = rand(40, window.innerWidth - 40);
+      var ty = below ? rand(window.innerHeight * 0.55, window.innerHeight - 110) : rand(90, window.innerHeight * 0.45);
+      a.gt = gsap.to(a.v, {
+        x: tx, y: ty, duration: rand(1.8, 2.8), ease: "sine.inOut",
+        onComplete: function () {
+          if (!a.guide) return;
+          // petit élan vers le bouton, la flèche pointe dans sa direction
+          a.lockRot = below ? 90 : -90;
+          if (Math.random() < 0.4) badge(a, "✉");
+          a.gt = gsap.to(a.v, {
+            y: "+=" + (below ? 1 : -1) * rand(40, 70), duration: 0.5, ease: "power2.out", yoyo: true, repeat: 1, repeatDelay: 0.25,
+            onComplete: function () {
+              a.lockRot = null;
+              a.gt = gsap.delayedCall(rand(0.5, 1.4), function () { guideLoop(a); });
+            }
+          });
+        }
+      });
+    }
+    function backToRing(a) {
+      a.guide = false; a.lockRot = null;
+      if (a.gt) a.gt.kill();
+      a.el.classList.remove("agent--guide");
+      a.el.removeEventListener("click", goToButton);
+      guides.splice(guides.indexOf(a), 1);
+      moveAgent(a, ringX(a), ringY(a), rand(1, 1.4)).eventCallback("onComplete", function () { a.busy = false; a.orbit = true; });
+    }
+    setInterval(function () {
+      if (buttonVisible()) { guides.slice().forEach(backToRing); return; }
+      var ring = agents.filter(function (a) { return a.orbit && a.ring && !a.guide; });
+      while (guides.length < 2 && ring.length) addGuide(ring.splice(Math.floor(Math.random() * ring.length), 1)[0]);
+    }, 600);
   }
 
   /* =========================================================

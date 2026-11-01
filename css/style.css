@@ -168,6 +168,9 @@ body { position: relative; }
   will-change: transform;
 }
 .agent svg { display: block; width: 100%; height: 100%; fill: currentColor; }
+/* Flèches qui invitent à revenir au bouton e-mail : on peut cliquer dessus */
+.agent--guide { pointer-events: auto; cursor: pointer; }
+.agent--guide::before { content: ""; position: absolute; inset: -16px; }
 
 /* Cadres bleus autour des éléments en construction */
 .wf {
