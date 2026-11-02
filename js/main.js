@@ -593,26 +593,43 @@
   // Un élément qui veut copier attend seulement qu'UN élément de sa liste soit fini :
   // ensuite toutes les copies se font en même temps (plus de longue file d'attente)
   function waitsForSource(L) {
-    if (L.wantCopy === undefined) L.wantCopy = prevSameKind(L).length > 0 && Math.random() < 0.35;
+    if (L.wantCopy === undefined) L.wantCopy = prevSameKind(L).length > 0 && Math.random() < 0.2;
     if (!L.wantCopy) return false;
     var sibs = prevSameKind(L);
     if (sibs.some(function (S) { return S.state === "done"; })) return false;
     return sibs.some(function (S) { return S.state === "queued" || S.state === "building"; });
   }
-  function chooseVariant(L, src) {
+  // Texte « simple » (pas de blocs à l'intérieur) : on peut y coller n'importe quel autre texte
+  function simpleText(el) {
+    return Array.prototype.every.call(el.children, function (c) { return getComputedStyle(c).display.indexOf("inline") === 0 || c.tagName === "BR"; });
+  }
+  // N'importe quel texte déjà construit et visible à l'écran peut servir de modèle à copier-coller
+  function anyVisibleSource(L) {
+    if (L.menu || !simpleText(L.el)) return null;
+    var c = layers.filter(function (S) {
+      if (S === L || S.state !== "done" || S.type !== "t") return false;
+      if (S.el.contains(L.el) || L.el.contains(S.el)) return false;
+      if (S.el.textContent.trim().length < 4) return false;
+      return inView(rectOf(S.el), -20);
+    });
+    return c.length ? pickOne(c).el : null;
+  }
+  // Toutes les animations peuvent tomber n'importe où : copier-coller, agrandissement,
+  // fautes de frappe, « Lorem ipsum » effacé, collage, mot par mot…
+  function chooseVariant(L, src, any) {
     if (L.type === "w") return "word";
-    if (src && (L.wantCopy || Math.random() < 0.2)) return "copy";
+    if (src && L.wantCopy) return "copy";
     var v, el = L.el, n = el.textContent.trim().length;
     for (var tries = 0; tries < 3; tries++) {
       if (L.type === "t") {
-        // grands titres : souvent tapés en petit puis agrandis
-        var big = parseFloat(getComputedStyle(el).fontSize) >= 36 && !hasOwnTransform(el);
-        v = pickWeighted([["type", 4], ["typo", n > 6 ? 3 : 0], ["rewrite", n < 70 ? 1.6 : 0], ["paste", 1.2], ["words", n > 40 ? 1.6 : 0], ["grow", big ? 6 : 0]]);
+        var free = !hasOwnTransform(el) && parseFloat(getComputedStyle(el).fontSize) >= 13;
+        v = pickWeighted([["type", 3], ["typo", n > 6 ? 2.5 : 0], ["rewrite", n < 90 ? 1.5 : 0], ["paste", 1.2],
+          ["words", n > 30 ? 1.3 : 0], ["grow", free ? 2.4 : 0], ["copy", src || any ? 2 : 0]]);
       } else if (L.type === "i") {
         v = pickWeighted([["ph", 3], ["scan", 3], ["drag", hasOwnTransform(el) || clippedAncestor(el) ? 0 : 3]]);
       } else {
         var movable = !hasOwnTransform(el);
-        v = pickWeighted([["wipe", 3], ["wipeV", 2], ["corner", 2], ["center", 1.5], ["drop", movable ? 2 : 0], ["pop", movable ? 1.5 : 0]]);
+        v = pickWeighted([["wipe", 3], ["wipeV", 2], ["corner", 2], ["center", 1.5], ["drop", movable ? 2 : 0], ["pop", movable ? 1.5 : 0], ["copy", src ? 1.5 : 0]]);
       }
       if (v !== lastVariant) break;
     }
@@ -629,9 +646,10 @@
     if (skipped || r.w < 2 || r.h < 2) { instant(L); release(a); return; }
     // Passé trop vite (défilement rapide, clic dans le menu) : il attendra qu'on revienne le regarder
     if (!inView(r, 60)) { backToPending(L); release(a); return; }
-    var src = copySource(L);
-    var variant = chooseVariant(L, src);
-    if (variant === "copy") await buildByCopy(L, a, src);
+    var src = copySource(L);                                     // un élément voisin de la même liste
+    var any = !src && L.type === "t" ? anyVisibleSource(L) : null; // ou n'importe quel texte à l'écran
+    var variant = chooseVariant(L, src, any);
+    if (variant === "copy") await buildByCopy(L, a, src || any);
     else await buildStandard(L, a, r, variant);
     if (skipped || L.abort) instant(L); else finish(L);
     release(a);
@@ -641,7 +659,8 @@
     var el = L.el;
     // « grow » : le texte est d'abord tapé en petit, puis agrandi à sa vraie taille
     var grow = variant === "grow";
-    var s = grow ? rand(0.32, 0.45) : 1;
+    var big = parseFloat(getComputedStyle(el).fontSize) >= 36;
+    var s = grow ? (big ? rand(0.32, 0.45) : rand(0.5, 0.65)) : 1;   // les petits textes grandissent moins
     var fw = r.w * s, fh = r.h * s;
     // 1. l'agent part d'un coin (ou du centre) et trace le cadre jusqu'au coin opposé
     var origin = grow ? [0, 0] : pickOne([[0, 0], [0, 0], [1, 0], [0, 1], [1, 1], [0.5, 0.5]]);
@@ -732,7 +751,13 @@
     if (!await run(L, pause(0.3))) return;
 
     L.orig = el.innerHTML;
-    el.innerHTML = src.innerHTML;
+    if (src.tagName === el.tagName && cls(src) === cls(el)) {
+      el.innerHTML = src.innerHTML;                 // même famille : copie à l'identique
+    } else {
+      // autre texte de la page : on colle son texte (raccourci s'il est bien plus long)
+      var t = src.textContent.replace(/\s+/g, " ").trim(), n0 = el.textContent.trim().length;
+      el.textContent = t.length > n0 * 1.4 + 10 ? t.slice(0, Math.round(n0 * 1.2) + 6) + "…" : t;
+    }
     el.classList.remove("L");
     var rd = rectOf(el);
     L.moved = true;
